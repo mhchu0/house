@@ -158,16 +158,23 @@
 
 ![image](https://user-images.githubusercontent.com/70302894/96394200-5aef6000-11fc-11eb-807d-86c87e834f44.jpg)
 
-    - View Model 추가
+
 
 ### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
 
 ![image](https://user-images.githubusercontent.com/70302894/96394204-5c208d00-11fc-11eb-9ac7-f15fb95d5fac.jpg)
 
-    - 고객이 메뉴를 선택하여 주문한다 (ok)
-    - 고객이 결제한다 (ok)
-    - 주문이 되면 주문 내역이 입점상점주인에게 전달된다 (ok)
-    - 상점주인이 확인하여 요리해서 배달 출발한다 (ok)
+    - 고객이 숙소 예약 가능 여부를 확인한다.(?)
+    - 고객이 숙소를 선택해 예약을 진행한다. (OK)
+    - 예약 시 자동으로 결제가 진행된다. (OK)
+    - 결제가 성공하면 숙소가 예약불가 상태가 된다. (OK)
+    - 숙소 상태 변경 시 예약이 확정상태가 된다. (OK)    
+    
+
+
+
+
+
 
 ![image](https://user-images.githubusercontent.com/70302894/96394205-5cb92380-11fc-11eb-8801-afefc12aa9b1.jpg)
     - 고객이 주문을 취소할 수 있다 (ok)
@@ -180,11 +187,9 @@
 
 ![image](https://user-images.githubusercontent.com/70302894/96394207-5d51ba00-11fc-11eb-80d9-1d5bb4356b1a.JPG)
     
+    - View Model 추가
     - 수정된 모델은 모든 요구사항을 커버함.
 
-### 비기능 요구사항에 대한 검증
-
-![image](https://user-images.githubusercontent.com/487999/79684184-5c9a9400-826a-11ea-8d87-2ed1e44f4562.png)
 
     - 마이크로 서비스를 넘나드는 시나리오에 대한 트랜잭션 처리
         - 고객 주문시 결제처리:  결제가 완료되지 않은 주문은 절대 받지 않는다는 경영자의 오랜 신념(?) 에 따라, ACID 트랜잭션 적용. 주문와료시 결제처리에 대해서는 Request-Response 방식 처리
