@@ -511,7 +511,7 @@ http http://localhost:8083/houses     # 제대로 kafka로 부터 data 수신 �
 
 각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 AWS CodeBuild를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하에 buildspec.yml 에 포함되었다.
 
-![image](https://user-images.githubusercontent.com/70302894/96394196-59259c80-11fc-11eb-9127-461cd5522b87.JPG)
+![image](https://user-images.githubusercontent.com/70302894/96580324-160a1d00-1313-11eb-97d3-ba0b269a658e.JPG)
 
 Webhook으로 연결되어 github에서 수정 시 혹은 codebuild에서 곧바로 빌드가 가능하다.
 
