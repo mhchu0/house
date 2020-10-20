@@ -730,10 +730,9 @@ Concurrency:		       96.02
             periodSeconds: 5
             failureThreshold: 5
 
-kubectl apply -f kubernetes/deployment.yaml
-```
 
-- 이후 Availability 확인:
+```
+- git commit 이후 자동배포 시 siege 돌리고 Availability 확인:
 ```
 Transactions:		        3078 hits
 Availability:		       100 %
