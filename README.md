@@ -242,71 +242,114 @@ mvn spring-boot:run
 
 ## DDD 의 적용
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 
-
+- 각 서비스 내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언
 ```
-package fooddelivery;
+package housebook;
+
+import org.springframework.beans.BeanUtils;
 
 import javax.persistence.*;
-import org.springframework.beans.BeanUtils;
-import java.util.List;
 
 @Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
+@Table(name="Payment_table")
+public class Payment {
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    private String orderId;
-    private Double 금액;
+    private Long houseId;
+    .../... 중략  .../...
+    private Double housePrice;
 
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-    public String getOrderId() {
-        return orderId;
+    
+    public Long gethouseId() {
+        return houseId;
     }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public void sethouseId(Long houseId) {
+        this.houseId = houseId;
     }
-    public Double get금액() {
-        return 금액;
-    }
-
-    public void set금액(Double 금액) {
-        this.금액 = 금액;
-    }
+    .../... 중략  .../...
 
 }
-
 ```
-- Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
-```
-package fooddelivery;
 
+
+
+- Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록    
+데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용
+```
+package housebook;
 import org.springframework.data.repository.PagingAndSortingRepository;
+    public interface PaymentRepository extends PagingAndSortingRepository<Payment, Long>{
 
-public interface 결제이력Repository extends PagingAndSortingRepository<결제이력, Long>{
 }
 ```
-- 적용 후 REST API 의 테스트
-```
-# app 서비스의 주문처리
-http localhost:8081/orders item="통닭"
+   
+   
+---
+#### 적용 후 REST API 의 테스트
 
-# store 서비스의 배달처리
-http localhost:8083/주문처리s orderId=1
+1. 숙소1 등록
+``` http http://localhost:8083/houses id=1 status=WAITING houseName=신라호텔 housePrice=200000 ```
 
-# 주문 상태 확인
-http localhost:8081/orders/1
+<img width="457" alt="숙소등록1" src="https://user-images.githubusercontent.com/54618778/96413666-f0074e80-1226-11eb-88ca-1278f0077fc9.png">
 
-```
+
+2. 숙소2 등록
+``` http http://localhost:8083/houses id=2 status=WAITING houseName=SK펜션 housePrice=500000 ```
+
+<img width="463" alt="숙소등록2" src="https://user-images.githubusercontent.com/54618778/96413673-f269a880-1226-11eb-9b1e-62ad3f98cd30.png">
+
+
+3. 숙소1 예약 
+``` http POST http://localhost:8081/books id=1 status=BOOKED houseId=1 bookDate=20201016 housePrice=200000 ```
+
+<img width="448" alt="숙소예약1" src="https://user-images.githubusercontent.com/54618778/96413678-f4336c00-1226-11eb-8665-1ed312adbed1.png">
+
+
+4. 숙소2 예약
+``` http POST http://localhost:8081/books id=2 status=BOOKED houseId=2 bookDate=20201016 housePrice=500000 ```
+
+<img width="450" alt="숙소예약2" src="https://user-images.githubusercontent.com/54618778/96413681-f4cc0280-1226-11eb-8f6c-f3d0e03c0456.png">
+
+
+5. 숙소2 예약 취소
+``` http http://localhost:8081/books id=2 status=BOOK_CANCELED houseId=2 ```
+
+<img width="451" alt="숙소취소" src="https://user-images.githubusercontent.com/54618778/96413687-f5fd2f80-1226-11eb-87fd-2f8c7ea695c5.png">
+
+
+6. 예약 보기
+```http localhost:8081/books ```
+
+<img width="573" alt="예약상태보기" src="https://user-images.githubusercontent.com/54618778/96413688-f695c600-1226-11eb-9659-11ba9322f19d.png">
+
+
+7. 숙소 보기 
+``` http localhost:8083/houses ```
+
+<img width="591" alt="숙소상태보기" src="https://user-images.githubusercontent.com/54618778/96413674-f3023f00-1226-11eb-830e-d6ab51cb745b.png">
+
+
+8. 숙소 예약된 상태 (MyPage)
+``` http localhost:8084/mypages/7 ```
+
+<img width="569" alt="숙소예약된상태" src="https://user-images.githubusercontent.com/54618778/96413683-f5649900-1226-11eb-8ec6-a384afb76ead.png">
+
+
+9. 숙소 예약취소된 상태 (MyPage)
+``` http localhost:8084/mypages/9 ```
+
+<img width="545" alt="MyPage_예약취소" src="https://user-images.githubusercontent.com/54618778/96413690-f72e5c80-1226-11eb-9a1e-72df208097fc.png">
+
+
+---
 
 
 ## 폴리글랏 퍼시스턴스
