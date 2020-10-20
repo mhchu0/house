@@ -553,15 +553,8 @@ Webhook으로 연결되어 github에서 수정 시 혹은 codebuild에서 곧바
     }
 ```
 
-* 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
-- 동시사용자 100명
-- 60초 동안 실시
+일단 서킷브레이커 미적용 시, 모든 요청이 성공했음을 확인
 
-```
-siege -c30 -t10S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"houseId":"1"}'
-
-```
-미적용 시, 모든 요청이 
 ![image](https://user-images.githubusercontent.com/70302894/96579636-1e158d00-1312-11eb-9a17-277b3caf3876.JPG)
 
 
@@ -588,17 +581,22 @@ spec:
 EOF
 ```
 
-적용 후 부하테스트
-![image](https://user-images.githubusercontent.com/70302894/96580900-f6bfbf80-1313-11eb-8210-4a4d96039f69.JPG)
+적용 후 부하테스트 시 서킷브레이커의 동작으로 미연결된 결과가 보임
+- 동시사용자 30명
+- 10초 동안 실시
+```
+siege -c30 -10S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"houseId":"1"}'
+```
 
-서킷브레이커의 동작으로 미연결된 결과가 보임
 ![image](https://user-images.githubusercontent.com/70302894/96579639-1f46ba00-1312-11eb-8b13-1c552b108711.JPG)
 
 78%정도의 요청 성공률 확인
+
 ![image](https://user-images.githubusercontent.com/70302894/96579632-1ce46000-1312-11eb-8c7a-8aff5c351056.JPG)
 
 키알리 화면 캡쳐
 ![image](https://user-images.githubusercontent.com/70302894/96579638-1eae2380-1312-11eb-8b9e-c3e21aec7d75.JPG)
+
 
 - 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
