@@ -598,7 +598,7 @@ siege -c30 -10S -v  --content-type "application/json" 'http://skccuser04-payment
 ![image](https://user-images.githubusercontent.com/70302894/96579638-1eae2380-1312-11eb-8b9e-c3e21aec7d75.JPG)
 
 
-- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 63.55% 가 성공하였고, 46%가 실패했다는 것은 고객 사용성에 있어 좋지 않기 때문에 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+- 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 더 과부하를 걸면 반 이상이 실패 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
 
 - Retry 의 설정 (istio)
@@ -636,26 +636,34 @@ EOF
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 
-- 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
+- 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 10프로를 넘어서면 replica 를 10개까지 늘려준다:
 ```
-kubectl autoscale deploy pay --min=1 --max=10 --cpu-percent=15
+kubectl autoscale deploy skccuser04-payment --min=1 --max=10 --cpu-percent=10 -n istio-cb-ns
+
+kubectl autoscale deployment.apps/skccuser04-payment --cpu-percent=10 --min=1 --max=10 -n istio-cb-ns
+```
+
+오토스케일을 ㅇ위한 metrics-server를 설치하고 배포한다. 적용한 istrio injection을 해제한다.
+```
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
+
+kubectl get deployment metrics-server -n kube-system
+
+kubectl label namespace istio-cb-ns istio-injection=disabled --overwrite
+
 ```
 - CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
 ```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://localhost:8081/orders POST {"item": "chicken"}'
+siege -c30 -t120S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"id":"1","houseId":"1","bookId":"1","status":"BOOKED"}'
 ```
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 ```
-kubectl get deploy pay -w
+watch kubectl get deploy skccuser04-payment -n istio-cb-ns
 ```
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
-```
-NAME    DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-pay     1         1         1            1           17s
-pay     1         2         1            1           45s
-pay     1         4         1            1           1m
-:
-```
+
+![image](https://user-images.githubusercontent.com/70302894/96588282-6d61ba80-131e-11eb-8f75-90e10ef6f203.JPG)
+
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다. 
 ```
 Transactions:		        5078 hits
