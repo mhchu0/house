@@ -687,10 +687,10 @@ siege -c30 -t120S -v  --content-type "application/json" 'http://skccuser04-payme
 ```
 
 - 코드빌드에서 재빌드 
-```
+
 ![image](https://user-images.githubusercontent.com/70302894/96588975-3dff7d80-131f-11eb-9018-6527b1907591.JPG)
 
-```
+
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
 ```
