@@ -39,7 +39,6 @@
 
 비기능적 요구사항
 1. 트랜잭션
-    1. 숙소 예약은 결제가 취소된 경우 불가해야한다.  Sync 호출
     1. 결제가 완료 되지 않은 예약 건은 예약이 성립되지 않는다.  Sync 호출
     1. 예약과 결제는 동시에 진행된다.  Sync 호출
     1. 예약 취소와 결제 취소는 동시에 진행된다.  Sync 호출
@@ -336,136 +335,130 @@ http localhost:8081/orders/1
 
 
 
-## 동기식 호출 과 Fallback 처리
 
-분석단계에서의 조건 중 하나로 예약(book)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
-
-- 결제서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
+## 동기식 호출과 Fallback 처리
+Book → Payment 간 호출은 동기식 일관성 유지하는 트랜잭션으로 처리.     
+호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출.     
 
 ```
-# (app) 결제이력Service.java
+BookApplication.java.
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
-package fooddelivery.external;
-
-@FeignClient(name="pay", url="http://localhost:8082")//, fallback = 결제이력ServiceFallback.class)
-public interface 결제이력Service {
-
-    @RequestMapping(method= RequestMethod.POST, path="/결제이력s")
-    public void 결제(@RequestBody 결제이력 pay);
-
+@SpringBootApplication
+@EnableBinding(KafkaProcessor.class)
+@EnableFeignClients
+public class BookApplication {
+    protected static ApplicationContext applicationContext;
+    public static void main(String[] args) {
+        applicationContext = SpringApplication.run(BookApplication.class, args);
+    }
 }
 ```
 
-- 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
-```
-# Order.java (Entity)
+FeignClient 방식을 통해서 Request-Response 처리.     
+Feign 방식은 넷플릭스에서 만든 Http Client로 Http call을 할 때, 도메인의 변화를 최소화 하기 위하여 interface 로 구현체를 추상화.    
+→ 실제 Request/Response 에러 시 Fegin Error 나는 것 확인   
 
+
+
+
+- 예약 받은 직후(@PostPersist) 결제 요청함
+```
+-- Book.java
     @PostPersist
     public void onPostPersist(){
+        Booked booked = new Booked();
+        BeanUtils.copyProperties(this, booked);
+        booked.publishAfterCommit();
 
-        fooddelivery.external.결제이력 pay = new fooddelivery.external.결제이력();
-        pay.setOrderId(getOrderId());
+        //Following code causes dependency to external APIs
+        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+
+        housebook.external.Payment payment = new housebook.external.Payment();
+        // mappings goes here
         
-        Application.applicationContext.getBean(fooddelivery.external.결제이력Service.class)
-                .결제(pay);
+        payment.setBookId(booked.getId());
+        payment.setHouseId(booked.getHouseId());
+        ...// 중략 //...
+
+        BookApplication.applicationContext.getBean(housebook.external.PaymentService.class)
+            .paymentRequest(payment);
+
     }
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
 
 
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인함.   
 ```
-# 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
+Book -- (http request/response) --> Payment
 
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Fail
-http localhost:8081/orders item=피자 storeId=2   #Fail
+# Payment 서비스 종료
 
-#결제서비스 재기동
-cd 결제
-mvn spring-boot:run
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
+# Book 등록
+http http://localhost:8081/books id=1 status=BOOKED houseId=1 bookDate=20201016 housePrice=200000    #Fail!!!!
 ```
+Payment를 종료한 시점에서 상기 Book 등록 Script 실행 시, 500 Error 발생.
+("Could not commit JPA transaction; nested exception is javax.persistence.RollbackException: Error while committing the transaction")   
+![](images/결제서비스_중지_시_예약시도.png)   
 
-- 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
 
-
-
-
+---
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 
+Payment가 이루어진 후에(PAID) House시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리.   
+House 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리.   
+이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish).   
 
-결제가 이루어진 후에 숙소에 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 숙소 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
- 
-- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
- 
+- House 서비스에서는 PAID 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:   
 ```
-package fooddelivery;
-
-@Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
-
- ...
-    @PrePersist
-    public void onPrePersist(){
-        결제승인됨 결제승인됨 = new 결제승인됨();
-        BeanUtils.copyProperties(this, 결제승인됨);
-        결제승인됨.publish();
-    }
-
-}
-```
-- 숙소 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
-
-```
-package fooddelivery;
-
-...
-
 @Service
 public class PolicyHandler{
 
+    @Autowired
+    HouseRepository houseRepository;
+    
     @StreamListener(KafkaProcessor.INPUT)
-    public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
+    public void onStringEventListener(@Payload String eventString){
 
-        if(결제승인됨.isMe()){
-            System.out.println("##### listener 주문정보받음 : " + 결제승인됨.toJson());
-            // 주문 정보를 받았으니, 요리를 슬슬 시작해야지..
-            
-        }
     }
 
-}
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverPaid_Rent(@Payload Paid paid){
+        if(paid.isMe()){
+            System.out.println("##### listener Rent : " + paid.toJson());
 
+            Optional<House> optional = houseRepository.findById(paid.getHouseId());
+            House house = optional.get();
+            house.setBookId(paid.getBookId());
+            house.setStatus("RENTED");
+
+            houseRepository.save(house);
+        }
+    }
 ```
-  
+
+- House 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, House 시스템이 유지보수로 인해 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
 ```
+# House Service 를 잠시 내려놓음 (ctrl+c)
 
+#PAID 처리
+http http://localhost:8082/payments id=1 status=PAID bookId=1 houseId=1 paymentDate=20201016 housePrice=200000 #Success!!
 
-```
+#결제상태 확인
+http http://localhost:8082/payments  #제대로 Data 들어옴   
 
-숙소 시스템은 예약/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 예약/결제 시스템이 유지보수로 인해 잠시 내려간 상태라도 숙소를 등록하는데 문제가 없다:
-```
-# 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
-
-#주문상태 확인
-http localhost:8080/orders     # 주문상태 안바뀜 확인
-
-#상점 서비스 기동
-cd 상점
+#House 서비스 기동
+cd house
 mvn spring-boot:run
 
-#주문상태 확인
-http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 확인
+#House 상태 확인
+http http://localhost:8083/houses     # 제대로 kafka로 부터 data 수신 함을 확인
 ```
+
+
+---
+
 
 
 # 운영
