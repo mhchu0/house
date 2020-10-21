@@ -580,12 +580,11 @@ spec:
       maxEjectionPercent: 100
 EOF
 ```
-
 적용 후 부하테스트 시 서킷브레이커의 동작으로 미연결된 결과가 보임
-- 동시사용자 30명
-- 10초 동안 실시
+- 동시사용자 20명
+- 20초 동안 실시
 ```
-siege -c30 -10S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"houseId":"1"}'
+siege -c20 -20S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"houseId":"1"}'
 ```
 
 ![image](https://user-images.githubusercontent.com/70302894/96579639-1f46ba00-1312-11eb-8b13-1c552b108711.JPG)
@@ -643,7 +642,7 @@ kubectl autoscale deploy skccuser04-payment --min=1 --max=10 --cpu-percent=10 -n
 kubectl autoscale deployment.apps/skccuser04-payment --cpu-percent=10 --min=1 --max=10 -n istio-cb-ns
 ```
 
-오토스케일을 ㅇ위한 metrics-server를 설치하고 배포한다. 적용한 istrio injection을 해제한다.
+오토스케일을 위한 metrics-server를 설치하고 배포한다. 적용한 istrio injection을 해제한다.
 ```
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
 
@@ -652,9 +651,9 @@ kubectl get deployment metrics-server -n kube-system
 kubectl label namespace istio-cb-ns istio-injection=disabled --overwrite
 
 ```
-- CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
+- CB 에서 했던 방식대로 워크로드를 20초 동안 걸어준다.
 ```
-siege -c30 -t120S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"id":"1","houseId":"1","bookId":"1","status":"BOOKED"}'
+siege -c20 -t120S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"id":"1","houseId":"1","bookId":"1","status":"BOOKED"}'
 ```
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 ```
@@ -683,7 +682,7 @@ Concurrency:		       96.02
 
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
 ```
-siege -c30 -t120S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"id":"1","houseId":"1","bookId":"1","status":"BOOKED"}'
+siege -c20 -t20S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"id":"1","houseId":"1","bookId":"1","status":"BOOKED"}'
 ```
 
 - 코드빌드에서 재빌드 
@@ -693,17 +692,9 @@ siege -c30 -t120S -v  --content-type "application/json" 'http://skccuser04-payme
 
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
-```
-Transactions:		        3078 hits
-Availability:		       70.45 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
-Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
 
-```
+![image](https://user-images.githubusercontent.com/70302894/96663165-1c3be000-138b-11eb-92f5-1dad6762dd5d.JPG)
+
 배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 와 liveness Prove 설정을 다시 추가:
 
 ```
@@ -733,17 +724,9 @@ Concurrency:		       96.02
 
 ```
 - git commit 이후 자동배포 시 siege 돌리고 Availability 확인:
-```
-Transactions:		        3078 hits
-Availability:		       100 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
-Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
 
-```
+![image](https://user-images.githubusercontent.com/70302894/96663164-1b0ab300-138b-11eb-9286-94a73c09cff4.JPG)
+
 
 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
