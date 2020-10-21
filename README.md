@@ -726,8 +726,8 @@ siege -c20 -t20S -v  --content-type "application/json" 'http://skccuser04-paymen
 
 
 # configmap
-rental 서비스의 경우, 국가와 지역에 따라 설정이 변할 수도 있음을 가정할 수 있다.   
-configmap에 설정된 국가와 지역 설정을 rental 서비스에서 받아 사용 할 수 있도록 한다.   
+house 서비스의 경우, 국가와 지역에 따라 설정이 변할 수도 있음을 가정할 수 있다.   
+configmap에 설정된 국가와 지역 설정을 house 서비스에서 받아 사용 할 수 있도록 한다.   
    
 아래와 같이 configmap을 생성한다.   
 data 필드에 보면 country와 region정보가 설정 되어있다. 
@@ -745,7 +745,7 @@ data:
 EOF
 ```
  
-rental deployment를 위에서 생성한 rental-region(cm)의 값을 사용 할 수 있도록 수정한다.
+house deployment를 위에서 생성한 house-region(cm)의 값을 사용 할 수 있도록 수정한다.
 ###### configmap내용을 deployment에 적용 
 ``` yaml
 apiVersion: apps/v1
