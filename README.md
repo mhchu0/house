@@ -236,6 +236,69 @@ cd mypage
 mvn spring-boot:run  
 ```
 
+게이트웨이 내부에서 spring, docker 환경에 따른 각 서비스 uri를 설정해주고 있다.
+```
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        - id: book
+          uri: http://localhost:8081
+          predicates:
+            - Path=/books/** 
+        - id: payment
+          uri: http://localhost:8082
+          predicates:
+            - Path=/payments/** 
+        - id: house
+          uri: http://localhost:8083
+          predicates:
+            - Path=/houses/** 
+        - id: mypage
+          uri: http://localhost:8084
+          predicates:
+            - Path= /mypages/**
+.....생략
+
+---
+
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        - id: book
+          uri: http://book:8080
+          predicates:
+            - Path=/books/** 
+        - id: payment
+          uri: http://payment:8080
+          predicates:
+            - Path=/payments/** 
+        - id: house
+          uri: http://house:8080
+          predicates:
+            - Path=/houses/** 
+        - id: mypage
+          uri: http://mypage:8080
+          predicates:
+            - Path= /mypages/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+```
+
+
+
+
 ## DDD 의 적용
 
 - 각 서비스 내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언
