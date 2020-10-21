@@ -729,7 +729,7 @@ rental 서비스의 경우, 국가와 지역에 따라 설정이 변할 수도 �
 configmap에 설정된 국가와 지역 설정을 rental 서비스에서 받아 사용 할 수 있도록 한다.   
    
 아래와 같이 configmap을 생성한다.   
-data 필드에 보면 contury와 region정보가 설정 되어있다. 
+data 필드에 보면 country와 region정보가 설정 되어있다. 
 ##### configmap 생성
 ```
 kubectl apply -f - <<EOF 
@@ -743,13 +743,7 @@ data:
   region: "seoul"
 EOF
 ```
-
-생성 확인
-
-
-![컨픽맵](https://user-images.githubusercontent.com/70302894/96666438-17c6f580-1392-11eb-995e-2400261e3c59.JPG)
-
-   
+ 
 rental deployment를 위에서 생성한 rental-region(cm)의 값을 사용 할 수 있도록 수정한다.
 ###### configmap내용을 deployment에 적용 
 ``` yaml
