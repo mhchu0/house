@@ -589,6 +589,10 @@ siege -c20 -t20S -v  --content-type "application/json" 'http://skccuser04-paymen
 키알리 화면 캡쳐
 ![image](https://user-images.githubusercontent.com/70302894/96579638-1eae2380-1312-11eb-8b9e-c3e21aec7d75.JPG)
 
+예거 화면 캡쳐
+![예거](https://user-images.githubusercontent.com/70302894/96673034-8743e180-13a0-11eb-9617-d9ab5149590f.JPG)
+
+
 
 - 운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 하지만, 더 과부하를 걸면 반 이상이 실패 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
