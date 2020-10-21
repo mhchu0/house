@@ -723,3 +723,6 @@ siege -c20 -t20S -v  --content-type "application/json" 'http://skccuser04-paymen
 
 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
 
+또한 Liveness Probe가 적용되어있어 kubectl get all -n istio-cb-ns에서 확인 시 자동으로 Restart 됨 (하단이미지 Restart 횟수 확인가능)
+
+![라이브네스 전](https://user-images.githubusercontent.com/70302894/96665219-5c9d5d00-138f-11eb-8c62-ad9ade0bc248.JPG)
