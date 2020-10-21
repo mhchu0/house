@@ -651,7 +651,7 @@ kubectl get deployment metrics-server -n kube-system
 kubectl label namespace istio-cb-ns istio-injection=disabled --overwrite
 
 ```
-- CB 에서 했던 방식대로 워크로드를 20초 동안 걸어준다.
+- CB 에서 했던 방식대로 워크로드를 120초 동안 걸어준다.
 ```
 siege -c20 -t120S -v  --content-type "application/json" 'http://skccuser04-payment:8080/payments POST {"id":"1","houseId":"1","bookId":"1","status":"BOOKED"}'
 ```
@@ -664,16 +664,9 @@ watch kubectl get deploy skccuser04-payment -n istio-cb-ns
 ![image](https://user-images.githubusercontent.com/70302894/96588282-6d61ba80-131e-11eb-8f75-90e10ef6f203.JPG)
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다. 
-```
-Transactions:		        5078 hits
-Availability:		       92.45 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
-Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
-```
+
+![오토스케일링 결과](https://user-images.githubusercontent.com/70302894/96664104-07604c00-138d-11eb-9fed-9c7bd56bf879.JPG)
+
 
 
 ## 무정지 재배포
