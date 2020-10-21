@@ -1,7 +1,3 @@
-
-- 체크포인트 : http://www.msaez.io/#/storming/AGOswYDNMOT81Zunvsugh5SeVo53/mine/1217efbb6be75f4b106e4e549d4ff19c/-MJkVIYsCqc3iFxd1fMY
-
-
 # Table of contents
 
 - [숙소예약](#---)
@@ -123,7 +119,7 @@
 
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://msaez.io/#/storming/nZJ2QhwVc4NlVJPbtTkZ8x9jclF2/every/a77281d704710b0c2e6a823b6e6d973a/-M5AV2z--su_i4BfQfeF
+* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/AGOswYDNMOT81Zunvsugh5SeVo53/mine/1217efbb6be75f4b106e4e549d4ff19c/-MJkVIYsCqc3iFxd1fMY
 
 
 ### 이벤트 도출
