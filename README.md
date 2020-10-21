@@ -736,18 +736,21 @@ configmap에 설정된 국가와 지역 설정을 rental 서비스에서 받아 
 data 필드에 보면 contury와 region정보가 설정 되어있다. 
 ##### configmap 생성
 ```
-$ kubectl apply -f - <<EOF
+kubectl apply -f - <<EOF 
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: rental-region
+  name: house-region
+  namespace: istio-cb-ns
 data:
-  contury: "korea"
+  country: "korea"
   region: "seoul"
 EOF
 ```
 
 생성 확인
+
+
 ![컨픽맵](https://user-images.githubusercontent.com/70302894/96666438-17c6f580-1392-11eb-995e-2400261e3c59.JPG)
 
    
@@ -757,23 +760,23 @@ rental deployment를 위에서 생성한 rental-region(cm)의 값을 사용 할 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rental
+  name: house
   labels:
-    app: rental
+    app: house
 ...
     spec:
       containers:
-        - name: rental
+        - name: house
           env:                                                 ##### 컨테이너에서 사용할 환경 변수 설정
-            - name: CONTURY
+            - name: COUNTRY
               valueFrom:
                 configMapKeyRef:
-                  name: rental-region
-                  key: contury
+                  name: house-region
+                  key: country
             - name: REGION
               valueFrom:
                 configMapKeyRef:
-                  name: rental-region
+                  name: house-region
                   key: region
           volumeMounts:                                                 ##### CM볼륨을 바인딩
           - name: config
@@ -783,7 +786,7 @@ metadata:
       volumes:                                                 ##### CM 볼륨 
       - name: config
         configMap:
-          name: rental-region
+          name: house-region
 ```
 configmap describe 시 확인 가능
 
