@@ -284,16 +284,7 @@ spring:
           uri: http://mypage:8080
           predicates:
             - Path= /mypages/**
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "*"
-            allowedMethods:
-              - "*"
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
+...
 ```
 
 
