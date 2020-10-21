@@ -785,9 +785,6 @@ metadata:
         configMap:
           name: rental-region
 ```
-rental pod에 cm에서 환경변수를 가져오겠다는 설정이 적용 된 것을 확인 할 수 있다.
-![](images/cm-1.PNG)
+configmap describe 시 확인 가능
 
-실제 rental pod안에서 cm에 설정된 국가와 지역 설정이 환경변수로 적용 된것을 확인 할 수 있다.
-![](images/cm-2.PNG)
-
+![컨픽맵2](https://user-images.githubusercontent.com/70302894/96668946-37145180-1397-11eb-8465-0a34c4e271f4.JPG)
