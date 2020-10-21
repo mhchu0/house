@@ -293,6 +293,7 @@ spring:
 ## DDD 의 적용
 
 - 각 서비스 내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언
+각 서비스는 연동 서비스의 key id를 가지고 있어 어떤 건에 대한 요청인지 구별 가능하다. (Correlation-key)
 ```
 package housebook;
 
