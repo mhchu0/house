@@ -746,6 +746,10 @@ data:
   region: "seoul"
 EOF
 ```
+
+생성 확인
+![컨픽맵](https://user-images.githubusercontent.com/70302894/96666438-17c6f580-1392-11eb-995e-2400261e3c59.JPG)
+
    
 rental deployment를 위에서 생성한 rental-region(cm)의 값을 사용 할 수 있도록 수정한다.
 ###### configmap내용을 deployment에 적용 
